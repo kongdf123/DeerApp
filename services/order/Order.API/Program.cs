@@ -2,6 +2,7 @@
 using Order.Application;
 using Order.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Order.API.Infrastructure;
 
 namespace Order.API
 {
@@ -17,11 +18,15 @@ namespace Order.API
 
             builder.Services.AddScoped<CreateOrder>();
 
-            builder.Services.AddHttpClient<CatalogApiClient>(client =>
-            {
-                //client.BaseAddress = new Uri("http://localhost:7001");
-                client.BaseAddress = new Uri("http://catalog-api:8080");
-            });
+            builder.Services
+                .AddHttpClient<CatalogApiClient>(client =>
+                {
+                    //client.BaseAddress = new Uri("http://localhost:7001");
+                    client.BaseAddress = new Uri("http://catalog-api:8080");
+                })
+                .AddPolicyHandler(HttpPolicies.RetryPolicy())
+                .AddPolicyHandler(HttpPolicies.TimeoutPolicy())
+                .AddPolicyHandler(HttpPolicies.CircuitBreakerPolicy());
 
             // Add services to the container.
 
