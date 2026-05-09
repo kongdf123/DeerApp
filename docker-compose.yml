@@ -1,0 +1,75 @@
+# version: '4.69'
+
+services:
+  gateway-api:
+    build:
+      context: ./gateway
+      dockerfile: Gateway.API/Dockerfile
+
+    container_name: gateway-api
+
+    restart: unless-stopped
+
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+
+    ports:
+      - "7000:8080"
+
+    depends_on:
+      - catalog-api
+      - order-api
+
+  postgres-catalog:
+    image: postgres:15
+    container_name: postgres-catalog
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: catalogdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-catalog-data:/var/lib/postgresql/data 
+
+  postgres-order:
+    image: postgres:15
+    container_name: postgres-order
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: orderdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-order-data:/var/lib/postgresql/data
+
+  catalog-api:
+    build:
+      context: ./services/catalog
+      dockerfile: Catalog.API/Dockerfile
+    container_name: catalog-api
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Postgres: Host=postgres-catalog;Port=5432;Database=catalogdb;Username=postgres;Password=postgres
+    ports:
+      - "7001:8080"
+    depends_on:
+      - postgres-catalog
+
+  order-api:
+    build:
+      context: ./services/order
+      dockerfile: Order.API/Dockerfile
+    container_name: order-api
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Postgres: Host=postgres-order;Port=5432;Database=orderdb;Username=postgres;Password=postgres
+    ports:
+      - "7002:8080"
+    depends_on:
+      - postgres-order 
+
+volumes:
+  postgres-catalog-data:
+  postgres-order-data:
