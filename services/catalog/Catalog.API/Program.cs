@@ -1,4 +1,5 @@
 
+using Catalog.API.Infrastructure;
 using Catalog.Application;
 using Catalog.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +30,8 @@ namespace Catalog.API
             builder.Services.AddSwaggerGen();
 
             builder.Configuration.AddEnvironmentVariables();
+
+            builder.Services.AddHostedService<OrderCreatedConsumer>();
 
             var app = builder.Build();
 

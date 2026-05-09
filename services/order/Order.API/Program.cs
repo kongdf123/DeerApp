@@ -3,6 +3,7 @@ using Order.Application;
 using Order.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Order.API.Infrastructure;
+using Shared.Contracts;
 
 namespace Order.API
 {
@@ -36,6 +37,8 @@ namespace Order.API
 
             builder.Configuration.AddEnvironmentVariables();
 
+            builder.Services.AddSingleton<RabbitMqPublisher>();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -48,13 +51,26 @@ namespace Order.API
             CreateOrder useCase,
             CreateOrderDto dto) =>
             {
-                var order = await useCase.Execute(
-                    dto.ProductId,
-                    dto.Quantity);
+                var publisher = app.Services.GetRequiredService<RabbitMqPublisher>();
 
-                return order is null
-                    ? Results.BadRequest("Invalid product")
-                    : Results.Ok(order);
+                await publisher.PublishAsync(new OrderCreatedEvent
+                {
+                    //OrderId = dto.Id,
+                    ProductId = dto.ProductId,
+                    Quantity = dto.Quantity,
+                    //UnitPrice = dto.UnitPrice,
+                    //CreatedAt = dto.CreatedAt
+                });
+
+                //var order = await useCase.Execute(
+                //    dto.ProductId,
+                //    dto.Quantity);
+
+                //return order is null
+                //    ? Results.BadRequest("Invalid product")
+                //    : Results.Ok(order);
+
+                return Results.Ok();
             });
 
             app.MapGet("/orders", async (AppDbContext db) =>

@@ -38,16 +38,18 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 
 WORKDIR /src
 
-COPY ["Catalog.API/Catalog.API.csproj", "Catalog.API/"]
-COPY ["Catalog.Application/Catalog.Application.csproj", "Catalog.Application/"]
-COPY ["Catalog.Domain/Catalog.Domain.csproj", "Catalog.Domain/"]
-COPY ["Catalog.Infrastructure/Catalog.Infrastructure.csproj", "Catalog.Infrastructure/"]
+COPY ["services/catalog/Catalog.API/Catalog.API.csproj", "services/catalog/Catalog.API/"]
+COPY ["services/catalog/Catalog.Application/Catalog.Application.csproj", "services/catalog/Catalog.Application/"]
+COPY ["services/catalog/Catalog.Domain/Catalog.Domain.csproj", "services/catalog/Catalog.Domain/"]
+COPY ["services/catalog/Catalog.Infrastructure/Catalog.Infrastructure.csproj", "services/catalog/Catalog.Infrastructure/"]
 
-RUN dotnet restore "Catalog.API/Catalog.API.csproj"
+COPY ["shared/Shared.Contracts/Shared.Contracts.csproj", "shared/Shared.Contracts/"]
+
+RUN dotnet restore "services/catalog/Catalog.API/Catalog.API.csproj"
 
 COPY . .
 
-WORKDIR "/src/Catalog.API"
+WORKDIR "/src/services/catalog/Catalog.API"
 
 RUN dotnet publish "Catalog.API.csproj" \
     -c Release \

@@ -35,7 +35,7 @@ WORKDIR /src
 
 COPY . .
 
-RUN dotnet publish Gateway.API/Gateway.API.csproj \
+RUN dotnet publish "/src/gateway/Gateway.API/Gateway.API.csproj" \
     -c Release \
     -o /app/publish
 

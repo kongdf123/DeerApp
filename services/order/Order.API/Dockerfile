@@ -33,16 +33,18 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 
 WORKDIR /src
 
-COPY ["Order.API/Order.API.csproj", "Order.API/"]
-COPY ["Order.Application/Order.Application.csproj", "Order.Application/"]
-COPY ["Order.Domain/Order.Domain.csproj", "Order.Domain/"]
-COPY ["Order.Infrastructure/Order.Infrastructure.csproj", "Order.Infrastructure/"]
+COPY ["services/order/Order.API/Order.API.csproj", "services/order/Order.API/"]
+COPY ["services/order/Order.Application/Order.Application.csproj", "services/order/Order.Application/"]
+COPY ["services/order/Order.Domain/Order.Domain.csproj", "services/order/Order.Domain/"]
+COPY ["services/order/Order.Infrastructure/Order.Infrastructure.csproj", "services/order/Order.Infrastructure/"]
 
-RUN dotnet restore "Order.API/Order.API.csproj"
+COPY ["shared/Shared.Contracts/Shared.Contracts.csproj", "shared/Shared.Contracts/"]
+
+RUN dotnet restore "services/order/Order.API/Order.API.csproj"
 
 COPY . .
 
-WORKDIR "/src/Order.API"
+WORKDIR "/src/services/order/Order.API"
 
 RUN dotnet publish "Order.API.csproj" \
     -c Release \

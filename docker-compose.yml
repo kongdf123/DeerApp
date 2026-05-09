@@ -3,19 +3,14 @@
 services:
   gateway-api:
     build:
-      context: ./gateway
-      dockerfile: Gateway.API/Dockerfile
-
+      context: .
+      dockerfile: gateway/Gateway.API/Dockerfile
     container_name: gateway-api
-
     restart: unless-stopped
-
     environment:
       ASPNETCORE_URLS: http://+:8080
-
     ports:
       - "7000:8080"
-
     depends_on:
       - catalog-api
       - order-api
@@ -46,21 +41,27 @@ services:
 
   catalog-api:
     build:
-      context: ./services/catalog
-      dockerfile: Catalog.API/Dockerfile
+      context: .
+      dockerfile: services/catalog/Catalog.API/Dockerfile
     container_name: catalog-api
     environment:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Postgres: Host=postgres-catalog;Port=5432;Database=catalogdb;Username=postgres;Password=postgres
     ports:
-      - "7001:8080"
+      - "7001:8080" 
     depends_on:
-      - postgres-catalog
+        postgres-order:
+          condition: service_started
+        rabbitmq:
+          condition: service_healthy
+    # depends_on:
+    #   - postgres-catalog 
+    #   - rabbitmq
 
   order-api:
     build:
-      context: ./services/order
-      dockerfile: Order.API/Dockerfile
+      context: .
+      dockerfile: services/order/Order.API/Dockerfile
     container_name: order-api
     environment:
       ASPNETCORE_URLS: http://+:8080
@@ -68,7 +69,26 @@ services:
     ports:
       - "7002:8080"
     depends_on:
-      - postgres-order 
+        postgres-order:
+          condition: service_started
+        rabbitmq:
+          condition: service_healthy
+    # depends_on:
+    #    - postgres-order
+    #    - rabbitmq
+        
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672" # AMQP messaging
+      - "15672:15672" # RabbitMQ management UI
+    healthcheck:
+        test: ["CMD", "rabbitmq-diagnostics", "ping"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
 
 volumes:
   postgres-catalog-data:
