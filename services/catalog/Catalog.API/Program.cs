@@ -3,6 +3,7 @@ using Catalog.API.Infrastructure;
 using Catalog.Application;
 using Catalog.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using System;
 
 namespace Catalog.API
@@ -11,6 +12,16 @@ namespace Catalog.API
     {
         public static void Main(string[] args)
         {
+            Log.Logger = new LoggerConfiguration()
+                .Enrich.WithEnvironmentName()
+                .Enrich.WithThreadId()
+                .Enrich.WithProperty(
+                    "Service",
+                    "Catalog.API")
+                .WriteTo.Console()
+                .WriteTo.Seq("http://seq:80")
+                .CreateLogger();
+
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
@@ -32,6 +43,8 @@ namespace Catalog.API
             builder.Configuration.AddEnvironmentVariables();
 
             builder.Services.AddHostedService<OrderCreatedConsumer>();
+
+            builder.Host.UseSerilog();
 
             var app = builder.Build();
 
@@ -67,6 +80,8 @@ namespace Catalog.API
             });
 
             app.MapControllers();
+
+            app.UseSerilogRequestLogging();
 
             app.Run();
 

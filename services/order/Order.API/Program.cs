@@ -4,6 +4,7 @@ using Order.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Order.API.Infrastructure;
 using Shared.Contracts;
+using Serilog;
 
 namespace Order.API
 {
@@ -11,6 +12,16 @@ namespace Order.API
     {
         public static void Main(string[] args)
         {
+            Log.Logger = new LoggerConfiguration()
+                .Enrich.WithEnvironmentName()
+                .Enrich.WithThreadId()
+                .Enrich.WithProperty(
+                    "Service",
+                    "Order.API")
+                .WriteTo.Console()
+                .WriteTo.Seq("http://seq:80")
+                .CreateLogger();
+
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddDbContext<AppDbContext>(opt =>
@@ -38,6 +49,8 @@ namespace Order.API
             builder.Configuration.AddEnvironmentVariables();
 
             builder.Services.AddSingleton<RabbitMqPublisher>();
+
+            builder.Host.UseSerilog();
 
             var app = builder.Build();
 
@@ -82,8 +95,10 @@ namespace Order.API
 
             app.UseAuthorization();
 
-
             app.MapControllers();
+
+            app.UseSerilogRequestLogging();
+            app.UseMiddleware<CorrelationIdMiddleware>();
 
             app.Run();
         }

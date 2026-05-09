@@ -89,6 +89,15 @@ services:
         interval: 10s
         timeout: 5s
         retries: 5
+  seq:
+     image: datalust/seq:latest
+     container_name: seq
+     restart: unless-stopped
+     environment:
+        ACCEPT_EULA: "Y"
+        SEQ_FIRSTRUN_ADMINPASSWORD: "df0a4fcf-f07c-4ea3-8200-f1c18e0ffa44"
+     ports:
+        - "5341:80"
 
 volumes:
   postgres-catalog-data:
