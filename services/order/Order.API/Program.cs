@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Order.API.Infrastructure;
 using Shared.Contracts;
 using Serilog;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace Order.API
 {
@@ -52,6 +54,33 @@ namespace Order.API
 
             builder.Host.UseSerilog();
 
+            builder.Services
+            .AddAuthentication("Bearer")
+            .AddJwtBearer("Bearer", options =>
+            {
+                options.Authority = "http://auth-api:8080";
+
+                options.TokenValidationParameters =
+                    new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidIssuer = "MicroservicesDemo",
+
+                        ValidateAudience = true,
+                        ValidAudience =
+                            "MicroservicesDemoUsers",
+
+                        ValidateIssuerSigningKey = true,
+
+                        IssuerSigningKey =
+                            new SymmetricSecurityKey(
+                                Encoding.UTF8.GetBytes(
+                                    "super_secret_key_12345"))
+                    };
+            });
+
+            builder.Services.AddAuthorization();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -89,11 +118,13 @@ namespace Order.API
             app.MapGet("/orders", async (AppDbContext db) =>
             {
                 return await db.Orders.ToListAsync();
-            });
+            }).RequireAuthorization();
 
             app.UseHttpsRedirection();
 
-            app.UseAuthorization();
+            app.UseAuthentication();
+
+            app.UseAuthorization(); 
 
             app.MapControllers();
 
